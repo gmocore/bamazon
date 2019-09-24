@@ -8,38 +8,64 @@ const connection = sql.createConnection({
   database: "bamazon",
   port: 3306
 });
+
+connection.connect(error => {
+  if (error) throw error;
+  promptUser();
+});
+
+function promptUser(){
+  inquirer.prompt({
+    name: "action",
+    type: "list",
+    message: "make a selection to continue",
+    choices: [
+      'display all items',
+      'purchase an item (by id)',
+      'exit'
+    ]
+  }).then(answer => {
+    switch (answer.action) {
+      case 'display all items':
+        displayItems()
+        promptUser();
+        break;
+      case 'purchase an item (by id)':
+        getProductId()
+        break;
+      case 'exit':
+        connection.end()
+        break;
+    }
+  })
+}
+
 function displayItems() {
   let query = `SELECT id, product_name, price FROM products;`;
-
-  connection.connect();
 
   connection.query(query, (error, results) => {
     if (error) throw error;
     results.forEach(item => {
-      console.log('ID:', item.id, 'Product:', item.product_name, '$' + item.price)
-    })
-    // console.log(results[1]);
+      console.log(
+        "ID:",
+        item.id,
+        "Product:",
+        item.product_name,
+        "$" + item.price
+      );
+    });
   });
-
-  // connection.end();
 }
-
-displayItems();
 
 function getProductId() {
   inquirer
-    .prompt([
-      {
+    .prompt({
         type: "number",
         name: "id",
         message: "Enter the ID of the product you want to buy"
-      }
-    ])
+      })
     .then(idData => {
-      // getUnitAmount(idData.id)
       let query = `SELECT id, product_name, price FROM products WHERE ?;`;
-
-      // connection.connect();
 
       connection.query(query, { id: idData.id }, (error, results) => {
         if (error) throw error;
@@ -49,9 +75,7 @@ function getProductId() {
         Price: ${results[0].price}
         `);
       });
-      getUnitAmount(idData.id)
-     
-      // connection.end();
+      getUnitAmount(idData.id);
     });
 }
 
@@ -66,38 +90,41 @@ function getUnitAmount(id) {
     ])
     .then(amount => {
       console.log("Product ID: ", id, "Units: ", amount.units);
-      connection.query(`SELECT stock_quantity, id, product_name, price FROM products WHERE ? `, { id: id }, (error, results) => {
-        if (error) throw error;
-        console.log(`
+      connection.query(
+        `SELECT stock_quantity, id, product_name, price FROM products WHERE ? `,
+        { id: id },
+        (error, results) => {
+          if (error) throw error;
+          console.log(`
         ID: ${results[0].id} 
         Product: ${results[0].product_name} 
         Price: ${results[0].price}
         Quantity: ${results[0].stock_quantity}
         `);
-        if(amount.units <= results[0].stock_quantity) {
-          console.log('purchase amount', '$', amount.units * results[0]. price, 'plus tax, of course')
-          console.log('this purchase can be approved')
-          subtractUnits(amount.units, results[0].id)
-        } else {
-          return console.log(`not enough stock, don't be so greedy`)
-         
+          if (amount.units <= results[0].stock_quantity) {
+            console.log(
+              "purchase amount",
+              "$",
+              amount.units * results[0].price,
+              "plus tax, of course"
+            );
+            subtractUnits(amount.units, results[0].id);
+          } else {
+            console.log(`not enough stock, don't be so greedy`);
+            promptUser()
+          }
         }
-      });
-
-      // connection.end()
+      );
     });
 }
 
 function subtractUnits(units, id) {
-  connection.query(`UPDATE products SET stock_quantity = stock_quantity - ${units} WHERE id = ${id};`,
- function (error, results) {
-    // error will be an Error if one occurred during the query
-    if (error) throw error;
-    console.log(results)
-    // results will contain the results of the query
-    // fields will contain information about the returned results fields (if any)
-  connection.end()
-  });
+  connection.query(
+    `UPDATE products SET stock_quantity = stock_quantity - ${units} WHERE id = ${id};`,
+    function(error, results) {
+      // error will be an Error if one occurred during the query
+      if (error) throw error;
+      promptUser()
+    }
+  );
 }
-
-getProductId();
