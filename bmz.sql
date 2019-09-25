@@ -23,6 +23,20 @@ INSERT INTO products(product_name, department_name, price, stock_quantity)
     ('Deflated Footballs', 'Sports', 200.00, 5)
 ;
 
+CREATE TABLE departments (
+  department_id INT NOT NULL AUTO_INCREMENT,
+  department VARCHAR(50) NOT NULL,
+  overhead_costs INT(10) NOT NULL,
+  PRIMARY KEY(department_id)
+);
+
+INSERT INTO departments(department, overhead_costs)
+	VALUES 
+    ('Unuseful Items', 5000),
+    ('Produce', 10000),
+    ('Ailments', 500), 
+    ('Sports', 15000),
+    ('Sorcery', 12000);
 
 SELECT * FROM products;
 
