@@ -57,11 +57,7 @@ const viewProducts = () => {
   connection.query(query, (error, results) => {
     if (error) throw error;
     results.forEach(item => {
-      console.log(`
-            ID: ${item.id},
-            Product: ${item.product_name},
-            $${item.price}
-            Quantity: ${item.stock_quantity}`);
+      console.log(`ID: ${item.id} Product: ${item.product_name} $${item.price} Quantity: ${item.stock_quantity}`);
     });
     managerPrompt();
   });
