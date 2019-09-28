@@ -63,4 +63,4 @@ JavaScript, Node.js, mySql
 ![](images/customer.gif)
 ![](images/mg1-3.gif)
 ![](images/mg-add.gif)
-![](images/supervisor.gif))
+![](images/sp.gif)
