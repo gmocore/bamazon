@@ -62,5 +62,5 @@ JavaScript, Node.js, mySql
 ## Examples
 ![](images/customer.gif)
 ![](images/mg1-3.gif)
-![](images/mg-add.gif
+![](images/mg-add.gif)
 ![](images/supervisor.gif))
