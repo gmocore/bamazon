@@ -1,5 +1,6 @@
 const inquirer = require("inquirer");
 const sql = require("mysql");
+const Table = require('cli-table')
 
 const connection = sql.createConnection({
   host: "localhost",
@@ -45,15 +46,14 @@ function displayItems() {
 
   connection.query(query, (error, results) => {
     if (error) throw error;
+
+    const table = new Table({
+      head: ['ID', 'Product', 'Price']
+  });
     results.forEach(item => {
-      console.log(
-        "ID:",
-        item.id,
-        "Product:",
-        item.product_name,
-        "$" + item.price
-      );
+      table.push([item.id, item.product_name, `$${item.price}`])
     });
+    console.log('\n', table.toString())
   });
 }
 
@@ -95,12 +95,13 @@ function getUnitAmount(id) {
         { id: id },
         (error, results) => {
           if (error) throw error;
-          console.log(`
-        ID: ${results[0].id} 
-        Product: ${results[0].product_name} 
-        Price: ${results[0].price}
-        Quantity: ${results[0].stock_quantity}
-        `);
+          var table = new Table({
+            head: ['ID', 'Product', 'Price', 'Quantity']
+        });
+        
+        table.push([results[0].id, results[0].product_name, results[0].price], results[0].stock_quantity)
+      
+        console.log(table.toString())
           if (amount.units <= results[0].stock_quantity) {
             console.log(
               "purchase amount",

@@ -1,6 +1,7 @@
 const sql = require("mysql");
 const inquirer = require("inquirer");
 const cTable = require("console.table");
+const Table = require('cli-table')
 
 const connection = sql.createConnection({
   host: "localhost",
@@ -42,12 +43,7 @@ const supervisorPrompt = () => {
     });
 };
 
-const viewSales = () => {
-  connection.query("the query", (error, results) => {
-    if (error) throw error;
-    console.log(results);
-  });
-};
+
 
 const createDepartment = () => {
   inquirer
@@ -81,3 +77,23 @@ const createDepartment = () => {
       );
     });
 };
+
+const viewSales = () => {
+  connection.query(`SELECT d.department, SUM(IFNULL(p.product_sales, 0)) as product_sales, 
+  SUM(IFNULL(p.product_sales, 0))  - d.overhead_costs as total_profit 
+  FROM products p RIGHT JOIN departments d ON p.department_name = d.department
+  GROUP BY d.department_id;`,
+  (error, results) => {
+    if (error) throw error;
+
+    const table = new Table({
+      head: ['Department', 'Total Profit']
+  });
+  
+    results.forEach(item => {
+      table.push([item.department, item.total_profit])
+    });
+    console.log('\n',table.toString())
+  })
+  supervisorPrompt()
+}

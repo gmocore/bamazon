@@ -106,7 +106,7 @@ const addNewItem = () => {
       }
     ])
     .then(product => {
-      console.log(product);
+      console.log(`added ${product.units} of ${product.item} to ${product.dept} at $${product.price}`);
       connection.query(
         `INSERT INTO products(product_name, department_name, price, stock_quantity)
 	VALUES('${product.item}', '${product.dept}', ${product.price}, ${product.units});`,
@@ -134,7 +134,7 @@ const addInventory = () => {
       }
     ])
     .then(product => {
-      console.log(product);
+      console.log(`added ${product.units} units of prodcut id ${product.id}`);
       connection.query(
         `UPDATE products SET stock_quantity = stock_quantity + ${product.units} WHERE id = ${product.id};`,
         function(error, results) {
