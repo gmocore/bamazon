@@ -1,6 +1,8 @@
 const sql = require("mysql");
 const inquirer = require("inquirer");
+const Table = require("cli-table");
 
+// db connection object with credentials
 const connection = sql.createConnection({
   host: "localhost",
   user: "root",
@@ -9,13 +11,14 @@ const connection = sql.createConnection({
   port: 3306
 });
 
-//db connection here
+//db connection
 connection.connect(error => {
   if (error) throw error;
   managerPrompt();
 });
 
 const managerPrompt = () => {
+  // get user choice
   inquirer
     .prompt({
       name: "action",
@@ -30,6 +33,7 @@ const managerPrompt = () => {
       ]
     })
     .then(answer => {
+      // route user choice to corresponding fucntion
       switch (answer.action) {
         case "view products for sale":
           viewProducts();
@@ -41,7 +45,7 @@ const managerPrompt = () => {
           addInventory();
           break;
         case "add new item":
-            addNewItem()
+          addNewItem();
           break;
 
         case "exit":
@@ -52,36 +56,48 @@ const managerPrompt = () => {
 };
 
 const viewProducts = () => {
+  // view all products from db
   let query = `SELECT id, product_name, price, stock_quantity FROM products;`;
 
   connection.query(query, (error, results) => {
     if (error) throw error;
-    results.forEach(item => {
-      console.log(`ID: ${item.id} Product: ${item.product_name} $${item.price} Quantity: ${item.stock_quantity}`);
+    const table = new Table({
+      head: ["ID", "Product", "Price", "Quantity"]
     });
+    results.forEach(item => {
+      table.push([item.id, item.product_name, item.price, item.stock_quantity]);
+    });
+    console.log(table.toString());
+    // when completed, show user choices
     managerPrompt();
   });
 };
 
 const lowInventory = () => {
+  // query db for low items (<5)
   connection.query(`SELECT * FROM products WHERE stock_quantity < 5;`, function(
     error,
     results
   ) {
-    // error will be an Error if one occurred during the query
     if (error) throw error;
-    results.forEach(item => {
-      console.log(`
-              ID: ${item.id},
-              Product: ${item.product_name},
-              $${item.price}
-              Quantity: ${item.stock_quantity}`);
+    const table = new Table({
+      head: ["ID", "Product", "Price", "Quantity"]
     });
+
+    // display low items to user
+    results.forEach(item => {
+  
+      table.push([item.id, item.product_name, item.price, item.stock_quantity]);
+    });
+    console.log(table.toString());
+
+    // when complete, show user choices
     managerPrompt();
   });
 };
 
 const addNewItem = () => {
+  // get inout for new item
   inquirer
     .prompt([
       {
@@ -95,24 +111,31 @@ const addNewItem = () => {
         type: "input"
       },
       {
-          name: 'price',
-          message: 'what is the price of the product?',
-          type: 'number'
+        name: "price",
+        message: "what is the price of the product?",
+        type: "number"
       },
       {
-          name: 'units',
-          message: 'how many units would you like to add?',
-          type: 'number'
+        name: "units",
+        message: "how many units would you like to add?",
+        type: "number"
       }
     ])
     .then(product => {
-      console.log(`added ${product.units} of ${product.item} to ${product.dept} at $${product.price}`);
+      // display item added to user
+      console.log(
+        `added ${product.units} of ${product.item} to ${product.dept} at $${product.price}`
+      );
+
+      // add item to db
       connection.query(
         `INSERT INTO products(product_name, department_name, price, stock_quantity)
 	VALUES('${product.item}', '${product.dept}', ${product.price}, ${product.units});`,
         function(error, results) {
           // error will be an Error if one occurred during the query
           if (error) throw error;
+
+          // send to choices
           managerPrompt();
         }
       );
@@ -120,6 +143,7 @@ const addNewItem = () => {
 };
 
 const addInventory = () => {
+  // get input to add to stock
   inquirer
     .prompt([
       {
@@ -134,12 +158,17 @@ const addInventory = () => {
       }
     ])
     .then(product => {
+      // display amount added
       console.log(`added ${product.units} units of prodcut id ${product.id}`);
+
+      // update db with amount to corresponding id
       connection.query(
         `UPDATE products SET stock_quantity = stock_quantity + ${product.units} WHERE id = ${product.id};`,
         function(error, results) {
           // error will be an Error if one occurred during the query
           if (error) throw error;
+
+          // show choices
           managerPrompt();
         }
       );

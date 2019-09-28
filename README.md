@@ -58,3 +58,9 @@ JavaScript, Node.js, mySql
 ## Authors
 
 - **Gerritt Black** - _Backend, API, Scripting/_ - [gmocore](https://github.com/gmocore)
+
+## Examples
+![](images/customer.gif)
+![](images/mg1-3.gif)
+![](images/mg-add.gif
+![](images/supervisor.gif))

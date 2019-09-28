@@ -2,6 +2,7 @@ const inquirer = require("inquirer");
 const sql = require("mysql");
 const Table = require('cli-table')
 
+// db connection object with credentials
 const connection = sql.createConnection({
   host: "localhost",
   user: "root",
@@ -10,11 +11,13 @@ const connection = sql.createConnection({
   port: 3306
 });
 
+// connect to db and get user input
 connection.connect(error => {
   if (error) throw error;
   promptUser();
 });
 
+// get choice from user
 function promptUser(){
   inquirer.prompt({
     name: "action",
@@ -26,6 +29,7 @@ function promptUser(){
       'exit'
     ]
   }).then(answer => {
+    // route user by selection
     switch (answer.action) {
       case 'display all items':
         displayItems()
@@ -44,20 +48,25 @@ function promptUser(){
 function displayItems() {
   let query = `SELECT id, product_name, price FROM products;`;
 
+  // query db to display all items
   connection.query(query, (error, results) => {
     if (error) throw error;
-
+     
+    // table objecy to display to user
     const table = new Table({
       head: ['ID', 'Product', 'Price']
   });
+    // push items to table
     results.forEach(item => {
       table.push([item.id, item.product_name, `$${item.price}`])
     });
+    // log table to console
     console.log('\n', table.toString())
   });
 }
 
 function getProductId() {
+  // get id  input from user
   inquirer
     .prompt({
         type: "number",
@@ -66,20 +75,27 @@ function getProductId() {
       })
     .then(idData => {
       let query = `SELECT id, product_name, price FROM products WHERE ?;`;
-
+      // select db item based on input
       connection.query(query, { id: idData.id }, (error, results) => {
         if (error) throw error;
-        console.log(`
-        ID: ${results[0].id} 
-        Product: ${results[0].product_name} 
-        Price: ${results[0].price}
-        `);
+
+        const table = new Table({
+          head: ['ID', 'Product', 'Price']
+        });
+
+        table.push([results[0].id, results[0].product_name, `$${results[0].price}`])
+       
+        console.log(`\n`,table.toString())
+
+   
       });
+      // id passed into function tp get amount
       getUnitAmount(idData.id);
     });
 }
 
 function getUnitAmount(id) {
+  // get unit anount from user
   inquirer
     .prompt([
       {
@@ -89,29 +105,38 @@ function getUnitAmount(id) {
       }
     ])
     .then(amount => {
-      console.log("Product ID: ", id, "Units: ", amount.units);
+      // display transaction
+      console.log("Product ID: ", id, "Units purchased: ", amount.units);
+      // select item from db
       connection.query(
         `SELECT stock_quantity, id, product_name, price FROM products WHERE ? `,
         { id: id },
         (error, results) => {
           if (error) throw error;
-          var table = new Table({
-            head: ['ID', 'Product', 'Price', 'Quantity']
-        });
+
+          const table = new Table({
+            head: ['ID', 'Product', 'Price']
+          });
+
+          table.push([results[0].id, results[0].product_name, `$${results[0].price}`])
+         
+          console.log(table.toString())
         
-        table.push([results[0].id, results[0].product_name, results[0].price], results[0].stock_quantity)
-      
-        console.log(table.toString())
+          // validation for transaction
           if (amount.units <= results[0].stock_quantity) {
+            // display transaction amount
             console.log(
               "purchase amount",
               "$",
               amount.units * results[0].price,
               "plus tax, of course"
             );
+            // subtract stock from db
             subtractUnits(amount.units, results[0].id);
           } else {
+            // alerts user of insufficient stock
             console.log(`not enough stock, don't be so greedy`);
+            // routes user to initial selections
             promptUser()
           }
         }
@@ -120,10 +145,10 @@ function getUnitAmount(id) {
 }
 
 function subtractUnits(units, id) {
+  // update db with amount from user
   connection.query(
     `UPDATE products SET stock_quantity = stock_quantity - ${units} WHERE id = ${id};`,
     function(error, results) {
-      // error will be an Error if one occurred during the query
       if (error) throw error;
       promptUser()
     }

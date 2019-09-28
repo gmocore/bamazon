@@ -3,6 +3,7 @@ const inquirer = require("inquirer");
 const cTable = require("console.table");
 const Table = require('cli-table')
 
+// db object with credentials
 const connection = sql.createConnection({
   host: "localhost",
   user: "root",
@@ -11,12 +12,17 @@ const connection = sql.createConnection({
   port: 3306
 });
 
+// databease conenct
 connection.connect(error => {
+
   if (error) throw error;
+
   supervisorPrompt();
+
 });
 
 const supervisorPrompt = () => {
+  // get user choice
   inquirer
     .prompt({
       name: "action",
@@ -29,6 +35,7 @@ const supervisorPrompt = () => {
       ]
     })
     .then(answer => {
+      // handle user choice
       switch (answer.action) {
         case "view product sales by department":
           viewSales();
@@ -44,8 +51,8 @@ const supervisorPrompt = () => {
 };
 
 
-
 const createDepartment = () => {
+  // get input for dept
   inquirer
     .prompt([
       {
@@ -60,18 +67,20 @@ const createDepartment = () => {
       }
     ])
     .then(response => {
-      console.log(response);
+      // add new entry to db
       connection.query(
         `INSERT INTO departments(department, overhead_costs)
         VALUES('${response.dept}', ${response.overhead});`,
         (error, results) => {
           if (error) throw error;
+          // display to user
           console.table([
             {
               department: response.dept,
               overhead_cost: response.overhead
             }
           ]);
+          // show choices
           supervisorPrompt();
         }
       );
@@ -79,6 +88,7 @@ const createDepartment = () => {
 };
 
 const viewSales = () => {
+  // query to show sales for all depts
   connection.query(`SELECT d.department, SUM(IFNULL(p.product_sales, 0)) as product_sales, 
   SUM(IFNULL(p.product_sales, 0))  - d.overhead_costs as total_profit 
   FROM products p RIGHT JOIN departments d ON p.department_name = d.department
@@ -86,6 +96,7 @@ const viewSales = () => {
   (error, results) => {
     if (error) throw error;
 
+    // display to console
     const table = new Table({
       head: ['Department', 'Total Profit']
   });
@@ -95,5 +106,6 @@ const viewSales = () => {
     });
     console.log('\n',table.toString())
   })
+  // show choices
   supervisorPrompt()
 }
